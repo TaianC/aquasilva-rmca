@@ -1,0 +1,3 @@
+#!/usr/bin/env bash
+echo starting rca host...
+python3 /home/pi/main.py

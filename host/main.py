@@ -10,6 +10,7 @@ try:
     from time import sleep
     from time import gmtime
     from time import strftime
+    from time import time
     # AES + RSA-based encryption was not finished, and sections using it were commented out.
     # from Cryptodome.PublicKey import RSA
     # from Cryptodome import Random
@@ -30,6 +31,7 @@ except ImportError as e:
     sleep = None
     gmtime = None
     strftime = None
+    time = None
     tkinter = None
     call = None
     Popen = None
@@ -125,7 +127,10 @@ class host:
                     print("[INFO]: Client has disconnected.")
                     host.restart()
                 elif command == b"rmca-1.0:sensor_collect":
-                    
+                    current_time = time()
+                    sensor_data_retrieval_index = self.sensor_data_index
+                    for x in self.sensor_data:
+                        
                 else:
                     connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
                 pass # add more keys here
@@ -326,7 +331,7 @@ class host:
             temperature = host.serial("/dev/ttyACM0", "receive", None) 
             humidity = host.serial("/dev/ttyACM0", "receive", None)
             water_level = host.erial("/dev/ttyACM0", "receive", None)
-            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), temperature, humidity, water_level]
+            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(time), temperature, humidity, water_level]
             self.sensor_data.append(data_bundle)
             self.sensor_data_index += 1
             # TODO ensure receive format matches arduino instructions

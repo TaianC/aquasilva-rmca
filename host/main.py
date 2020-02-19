@@ -61,8 +61,6 @@ class host:
         self.host = ""
         self.port = 64220
         self.connect_retries = 0
-        led_graphics = None
-        science = None
         print("[INFO]: Loading configurations...")
         config_parse_load = configparser.ConfigParser()
         try:

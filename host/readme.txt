@@ -1,4 +1,4 @@
-This directory contains the software for running the host server-side remote control application on a bot.
+This directory contains the software for running the host server-side remote control application.
 To install, copy contents into the user "pi"'s home directory.
 Next, to add a start-up script to automatically start the host RCA upon booting the bot, run "sudo ./boot_run.sh", not "rca-startup.sh". Please remember to CHMOD boot_run.sh before running.
 Afterwards please ensure you have Python 3 installed, and all necessary Python and Linux packages. See requirements.txt for more details.

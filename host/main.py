@@ -8,6 +8,8 @@ try:
     from subprocess import call
     from subprocess import Popen
     from time import sleep
+    from time import gmtime
+    from time import strftime
     # AES + RSA-based encryption was not finished, and sections using it were commented out.
     # from Cryptodome.PublicKey import RSA
     # from Cryptodome import Random
@@ -26,6 +28,8 @@ try:
     # import hashlib
 except ImportError as e:
     sleep = None
+    gmtime = None
+    strftime = None
     tkinter = None
     call = None
     Popen = None
@@ -61,6 +65,8 @@ class host:
         self.host = ""
         self.port = 64220
         self.connect_retries = 0
+        self.sensor_data = []
+        self.sensor_data_index = 0
         print("[INFO]: Loading configurations...")
         config_parse_load = configparser.ConfigParser()
         try:
@@ -118,6 +124,8 @@ class host:
                     self.socket.close()
                     print("[INFO]: Client has disconnected.")
                     host.restart()
+                elif command == b"rmca-1.0:sensor_collect":
+                    
                 else:
                     connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
                 pass # add more keys here
@@ -307,6 +315,23 @@ class host:
         call("sudo apt-get update && sudo apt-get upgrade -y", shell = True)
         call("sudo apt update && sudo apt upgrade -y", shell = True)
         return True
+    pass
+    def sensor_collect(self):
+        """
+        Collects sensor data from serial connection and adds to data list.
+        Intended to be ran through host.create_process.
+        """
+        while True:
+            host.serial("/dev/ttyACM0", "send", "%")
+            temperature = host.serial("/dev/ttyACM0", "receive", None) 
+            humidity = host.serial("/dev/ttyACM0", "receive", None)
+            water_level = host.erial("/dev/ttyACM0", "receive", None)
+            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), temperature, humidity, water_level]
+            self.sensor_data.append(data_bundle)
+            self.sensor_data_index += 1
+            # TODO ensure receive format matches arduino instructions
+            sleep(1)
+        pass
     pass
 pass
 

@@ -240,7 +240,7 @@ class client:
 		:return: none.
 		"""
 		while True:
-			self.socket.sendall(client.send(self, b"rca-1.2:vitals_request"))
+			self.socket.sendall(client.send(self, b"rmca-1.0:vitals_request"))
 			vitals_text_data = client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace")
 			if self.random_refresh is True:
 				sleep(randint(1, 3))
@@ -400,7 +400,7 @@ class client:
 		if report_type == "":
 			pass
 		elif report_type == "CH Check":
-			self.socket.sendall(client.send(self, b"rca-1.2:command_ch_check"))
+			self.socket.sendall(client.send(self, b"rmca-1.0:command_ch_check"))
 			data = client.receive(self, self.socket.recv(4096))
 			data = data.decode(encoding="utf-8", errors="replace")
 			self.report_content = data
@@ -521,7 +521,7 @@ class client:
 		#     return None
 		# pass
 		# msg = self.socket.recv(1024)
-		# self.socket.sendall(b"rca-1.2:connection_acknowledge")
+		# self.socket.sendall(b"rmca-1.0:connection_acknowledge")
 		# en = eval(msg)
 		# decrypt = self.key.decrypt(en)
 		# hashing sha1
@@ -533,7 +533,7 @@ class client:
 		Sends a message to host notifying that client has disconnected and then closes socket.
 		:return: none.
 		"""
-		self.socket.sendall(client.send(self, b"rca-1.2:disconnected"))
+		self.socket.sendall(client.send(self, b"rmca-1.0:disconnected"))
 		self.net_status_data.set("Status: " + "Disconnected")
 		self.socket.close()
 		print("[INFO]: Disconnected from bot.")
@@ -597,13 +597,13 @@ class client:
 			print(sae)
 			return False
 		pass
-		if acknowledgement == b"rca-1.2:connection_acknowledge":
+		if acknowledgement == b"rmca-1.0:connection_acknowledge":
 			print("[INFO]: Received acknowledgement.")
 			return True
-		elif acknowledgement == b"rca-1.2:authentication_invalid":
+		elif acknowledgement == b"rmca-1.0:authentication_invalid":
 			print("[FAIL]: Did not receive an acknowledgement. Authentication was invalid.")
 			return False
-		elif acknowledgement == b"rca-1.2:unknown_command":
+		elif acknowledgement == b"rmca-1.0:unknown_command":
 			print("[FAIL]: Command unrecognized by host.")
 			return False
 		else:

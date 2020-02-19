@@ -92,34 +92,34 @@ class host:
         self.socket.setblocking(False)
         with connection:
             print("[INFO]: Received connection from ", client_address, ".")
-            connection.sendall(host.send(self, b"rmca-1.2:connection_acknowledge"))
+            connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
             data = SHA3_512.new(host.receive(self, connection.recv(4096))).hexdigest().encode(encoding = "ascii", errors = "replace")
             if data == self.auth:
                 print("[INFO]: Client authenticated!")
-                connection.sendall(host.send(self, b"rmca-1.2:connection_acknowledge"))
+                connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
             else:
                 print("[FAIL]: Client authentication invalid! Given code does not match authentication code.")
-                connection.sendall(host.send(self, b"rmca-1.2:authentication_invalid"))
+                connection.sendall(host.send(self, b"rmca-1.0:authentication_invalid"))
                 self.socket.close()
                 host.restart()
             pass
             while True:
                 command = host.receive(self, connection.recv(4096))
-                if command == b"rmca-1.2:command_shutdown":
-                    connection.sendall(host.send(self, b"rmca-1.2:connection_acknowledge"))
+                if command == b"rmca-1.0:command_shutdown":
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
                     host.shutdown()
-                elif command == b"rmca-1.2:command_reboot":
-                    connection.sendall(host.send(self, b"rmca-1.2:connection_acknowledge"))
+                elif command == b"rmca-1.0:command_reboot":
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
                     host.reboot()
-                elif command == b"rmca-1.2:command_update":
-                    connection.sendall(host.send(self, b"rmca-1.2:connection_acknowledge"))
+                elif command == b"rmca-1.0:command_update":
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
                     host.os_update()
-                elif command == b"rmca-1.2:disconnected":
+                elif command == b"rmca-1.0:disconnected":
                     self.socket.close()
                     print("[INFO]: Client has disconnected.")
                     host.restart()
                 else:
-                    connection.sendall(host.send(self, b"rmca-1.2:unknown_command"))
+                    connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
                 pass # add more keys here
             pass
         pass
@@ -247,7 +247,7 @@ class host:
             print(sae)
             return False
         pass
-        if acknowledgement == b"rmca-1.2:connection_acknowledge":
+        if acknowledgement == b"rmca-1.0:connection_acknowledge":
             print("[INFO]: Received acknowledgement.")
             return True
         else:

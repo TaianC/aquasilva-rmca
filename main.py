@@ -401,6 +401,9 @@ class client:
 			pass
 		elif report_type == "CH Check":
 			self.socket.sendall(client.send(self, b"rmca-1.0:command_ch_check"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
 			data = client.receive(self, self.socket.recv(4096))
 			data = data.decode(encoding="utf-8", errors="replace")
 			self.report_content = data

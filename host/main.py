@@ -26,6 +26,7 @@ try:
     import multiprocessing
     import serial
     from ast import literal_eval
+    from .computer_hardware_check import ch_check
     # import hashlib
 except ImportError as e:
     sleep = None
@@ -46,6 +47,7 @@ except ImportError as e:
     multiprocessing = None
     literal_eval = None
     SHA3_512 = None
+    ch_check = None
     # RSA = None
     # AES = None
     # Random = None
@@ -127,10 +129,15 @@ class host:
                     print("[INFO]: Client has disconnected.")
                     host.restart()
                 elif command == b"rmca-1.0:sensor_collect":
-                    current_time = time()
-                    sensor_data_retrieval_index = self.sensor_data_index
-                    for x in self.sensor_data:
-                        
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+                    sensor_data_now = self.sensor_data[self.sensor_data_index]
+                    for x in sensor_data_now:
+                        sensor_data_now[x].encode(encoding = "ascii", errors = "replace")
+                    pass
+                    connection.sendall(host.send(self, sensor_data_now[0] + b" " + sensor_data_now[1] + b" " + sensor_data_now[2] + b" " + sensor_data_now[3] + b" " + sensor_data_now[4]))
+                elif command == b"rca-1.2:command_ch_check":
+                    connection.sendall(host.send(self, b"rca-1.2:connection_acknowledge"))
+                    connection.sendall(host.send(self, ch_check()))
                 else:
                     connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
                 pass # add more keys here
@@ -141,6 +148,7 @@ class host:
     def serial(port, direction, message):
         """
         Sends or receives serial communications to the Arduino integration.
+        Valid send keys are Toggle ValveOutlet, Toggle ValveInlet, Toggle Light, Light Brightness Increase, and Light Brightness Decrease in the order they appear in the message list check.
         :param port: the port that the Arduino is connected to.
         :param direction: whether to expect to receive or send.
         :param message: what contents to send, or if receiving leave as None.
@@ -150,7 +158,7 @@ class host:
         if direction == "receive":
             return arduino_connect.readline().decode(encoding = "utf-8", errors = "replace")
         elif direction == "send":
-            if message not in [""]: # TODO list all possible comamnds
+            if message not in ["<", ">", "L", "[", "]"]: # TODO list all possible commands
                 return None
             pass
             arduino_connect.write(message.encode(encoding = "ascii", errors = "replace"))
@@ -330,11 +338,11 @@ class host:
             host.serial("/dev/ttyACM0", "send", "%")
             temperature = host.serial("/dev/ttyACM0", "receive", None) 
             humidity = host.serial("/dev/ttyACM0", "receive", None)
-            water_level = host.erial("/dev/ttyACM0", "receive", None)
-            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(time), temperature, humidity, water_level]
+            water_level = host.serial("/dev/ttyACM0", "receive", None)
+            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(int(time())), temperature, humidity, water_level]
             self.sensor_data.append(data_bundle)
             self.sensor_data_index += 1
-            # TODO ensure receive format matches arduino instructions
+            # TODO ensure receive format matches Arduino instructions
             sleep(1)
         pass
     pass

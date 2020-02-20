@@ -72,6 +72,10 @@ class host:
         self.sensor_data = []
         self.sensor_data_index = 0
         self.operation_status = 0
+        self.state_valve_outlet = False
+        self.state_valve_inlet = False
+        self.state_light = False
+        self.state_light_level = 0
         print("[INFO]: Loading configurations...")
         config_parse_load = configparser.ConfigParser()
         try:
@@ -151,6 +155,11 @@ class host:
             pass
         pass
     pass
+    def state_reset(self):
+        """
+        Resets state values
+        """
+    pass
     def auto(self):
         """
         Automatic management of AquaSilva system. Intended to be ran through host.create_process.
@@ -158,7 +167,21 @@ class host:
         """
         while True:
             sensor_data_now = self.sensor_data[self.sensor_data_index]
-
+            if sensor_data_now[4] == "HIGH":
+                host.serial("/dev/ttyACM0", "send", "<")
+                water_level_corrected = False
+                while water_level_corrected is False:
+                    if self.sensor_data[self.sensor_data_index][4] == "MID":
+                        host.serial("/dev/ttyACM0", "send", "<")
+                        water_level_corrected = True
+                    elif self.sensor_data[self.sensor_data_index][4] == "LOW":
+                        host.serial("/dev/ttyACM0", "send", "<")
+                        host.serial("/dev/ttyACM0", "send", ">")
+                    else:
+                        pass
+                    pass
+                pass
+            pass    
         pass
     pass
     @staticmethod

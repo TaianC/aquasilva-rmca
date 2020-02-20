@@ -96,6 +96,7 @@ class host:
         except FileNotFoundError:
             print("[FAIL]: Failed to load configurations! Configuration file is missing.")
         pass
+        host.state_reset(self)
         print("[INFO]: Starting background processes...")
         self.process_sensor_collect = host.create_process(host.sensor_collect, self)
         self.process_auto = host.create_process(host.auto, self)
@@ -157,8 +158,16 @@ class host:
     pass
     def state_reset(self):
         """
-        Resets state values
+        Resets state values and hardware.
+        :return: none.
         """
+        print("[INFO]: Resetting states and hardware...")
+        self.state_valve_outlet = False
+        self.state_valve_inlet = False
+        self.state_light = False
+        self.state_light_level = 100
+        host.serial("/dev/ttyACM0", "send", "R")
+        host.serial("/dev/ttyACM0", "send", ":")
     pass
     def auto(self):
         """
@@ -188,7 +197,7 @@ class host:
     def serial(port, direction, message):
         """
         Sends or receives serial communications to the Arduino integration.
-        Valid send keys are Toggle ValveOutlet, Toggle ValveInlet, Toggle Light, Light Brightness Increase, and Light Brightness Decrease in the order they appear in the message list check.
+        Valid send keys are Toggle ValveOutlet, Toggle ValveInlet, Toggle Light, Light Brightness Increase, Light Brightness Decrease, Reset, and Light Servo Calibrate in the order they appear in the message list check.
         :param port: the port that the Arduino is connected to.
         :param direction: whether to expect to receive or send.
         :param message: what contents to send, or if receiving leave as None.
@@ -198,7 +207,7 @@ class host:
         if direction == "receive":
             return arduino_connect.readline().decode(encoding = "utf-8", errors = "replace")
         elif direction == "send":
-            if message not in ["<", ">", "L", "[", "]"]: # TODO list all possible commands
+            if message not in ["<", ">", "L", "[", "]", "R", ":"]: # TODO list all possible commands
                 return None
             pass
             arduino_connect.write(message.encode(encoding = "ascii", errors = "replace"))

@@ -62,7 +62,7 @@ pass
 class host:
     """Main class."""
     def __init__(self):
-        """Initiation function of AquaSilva RMCA."""
+        """Initiation and command loop instructions of AquaSilva RMCA."""
         print("[INFO]: Starting host AquaSilva RMC Application...")
         print("[INFO]: Declaring variables...")
         self.socket = None
@@ -71,6 +71,7 @@ class host:
         self.connect_retries = 0
         self.sensor_data = []
         self.sensor_data_index = 0
+        self.operation_status = 0
         print("[INFO]: Loading configurations...")
         config_parse_load = configparser.ConfigParser()
         try:
@@ -91,6 +92,9 @@ class host:
         except FileNotFoundError:
             print("[FAIL]: Failed to load configurations! Configuration file is missing.")
         pass
+        print("[INFO]: Starting background processes...")
+        self.process_sensor_collect = host.create_process(host.sensor_collect, self)
+        self.process_auto = host.create_process(host.auto, self)
         print("[INFO]: Creating open server socket...")
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.setblocking(False)
@@ -135,13 +139,26 @@ class host:
                         sensor_data_now[x].encode(encoding = "ascii", errors = "replace")
                     pass
                     connection.sendall(host.send(self, sensor_data_now[0] + b" " + sensor_data_now[1] + b" " + sensor_data_now[2] + b" " + sensor_data_now[3] + b" " + sensor_data_now[4]))
-                elif command == b"rca-1.2:command_ch_check":
+                elif command == b"rmca-1.0:command_ch_check":
                     connection.sendall(host.send(self, b"rca-1.2:connection_acknowledge"))
                     connection.sendall(host.send(self, ch_check()))
+                elif command == b"rca-1.0:command_auto_start":
+                    # TODO add automatic operation status switching
+                    pass
                 else:
                     connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
                 pass # add more keys here
             pass
+        pass
+    pass
+    def auto(self):
+        """
+        Automatic management of AquaSilva system. Intended to be ran through host.create_process.
+        :return: none.
+        """
+        while True:
+            sensor_data_now = self.sensor_data[self.sensor_data_index]
+
         pass
     pass
     @staticmethod

@@ -69,5 +69,9 @@ void loop() {
     if (incomingData == '[') {
       
     }
+
+    if (incomingData == ']') {
+
+    }
   }
 }

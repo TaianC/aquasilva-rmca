@@ -167,6 +167,7 @@ class host:
         self.state_light = False
         self.state_light_level = 100
         host.serial("/dev/ttyACM0", "send", "R")
+        sleep(2)
         host.serial("/dev/ttyACM0", "send", ":")
     pass
     def auto(self):
@@ -180,10 +181,10 @@ class host:
                 host.serial("/dev/ttyACM0", "send", "<")
                 water_level_corrected = False
                 while water_level_corrected is False:
-                    if self.sensor_data[self.sensor_data_index][4] == "MID":
+                    if self.sensor_data[self.sensor_data_index][5] == "MID":
                         host.serial("/dev/ttyACM0", "send", "<")
                         water_level_corrected = True
-                    elif self.sensor_data[self.sensor_data_index][4] == "LOW":
+                    elif self.sensor_data[self.sensor_data_index][5] == "LOW":
                         host.serial("/dev/ttyACM0", "send", "<")
                         host.serial("/dev/ttyACM0", "send", ">")
                     else:
@@ -385,10 +386,11 @@ class host:
         """
         while True:
             host.serial("/dev/ttyACM0", "send", "%")
-            temperature = host.serial("/dev/ttyACM0", "receive", None) 
+            temperature = host.serial("/dev/ttyACM0", "receive", None)
+            temperature_water = host.serial("/dev/ttyACM0", "receive", None)
             humidity = host.serial("/dev/ttyACM0", "receive", None)
             water_level = host.serial("/dev/ttyACM0", "receive", None)
-            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(int(time())), temperature, humidity, water_level]
+            data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(int(time())), temperature, temperature_water, humidity, water_level]
             self.sensor_data.append(data_bundle)
             self.sensor_data_index += 1
             # TODO ensure receive format matches Arduino instructions

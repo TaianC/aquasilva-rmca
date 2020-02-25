@@ -608,6 +608,10 @@ class client:
 		elif acknowledgement == b"rmca-1.0:authentication_invalid":
 			print("[FAIL]: Did not receive an acknowledgement. Authentication was invalid.")
 			return False
+        elif acknowledgement == b"rmca-1.0:operation_status_incompatible":
+            print("[FAIL]: Current operation status is automatic, manual input is not allowed. Please change from automatic operation.")
+            messagebox.showerror("AquaSilva RMCA: Operation Status Incompatible", "Host is currently running in automatic operation. Please disable this to allow for manual input.")
+            return False
 		elif acknowledgement == b"rmca-1.0:unknown_command":
 			print("[FAIL]: Command unrecognized by host.")
 			return False

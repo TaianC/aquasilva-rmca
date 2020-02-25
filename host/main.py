@@ -71,7 +71,7 @@ class host:
         self.connect_retries = 0
         self.sensor_data = []
         self.sensor_data_index = 0
-        self.operation_status = 0
+        self.operation_status = 0 # 0 = manual, 1 = auto
         self.state_valve_outlet = False
         self.state_valve_inlet = False
         self.state_light = False
@@ -145,10 +145,44 @@ class host:
                     pass
                     connection.sendall(host.send(self, sensor_data_now[0] + b" " + sensor_data_now[1] + b" " + sensor_data_now[2] + b" " + sensor_data_now[3] + b" " + sensor_data_now[4]))
                 elif command == b"rmca-1.0:command_ch_check":
-                    connection.sendall(host.send(self, b"rca-1.2:connection_acknowledge"))
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
                     connection.sendall(host.send(self, ch_check()))
-                elif command == b"rca-1.0:command_auto_start":
+                elif command == b"rmca-1.0:state_get":
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+                    states = [str(self.operation_status), str(self.state_valve_outlet), str(self.state_valve_inlet), str(self.state_light), str(self.state_light_level)]
+                    states_index = 5
+                    while states_index != 0:
+                        connection.sendall(host.send(self, states[states_index]))
+                        states_index -= 1
+                    pass
+                elif command == b"rmca-1.0:state_reset":
+                    connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+                    host.state_reset(self)
+                elif command == b"rmca-1.0:command_auto_start":
                     # TODO add automatic operation status switching
+                    pass
+                elif command == b"rmca-1.0:command_auto_stop":
+                    # TODO add automatic operation status switching
+                elif command == b"rmca-1.0:command_valve_inlet_toggle":
+                    if self.operation_status == 0:
+                        connection.sendall(host.send(b"rmca-1.0:connection_acknowledge"))
+                        host.serial("/dev/ttyACM0", "send", ">")
+                    else:
+                        connection.sendall(host.send(b"rmca-1.0:operation_state_incompatible"))
+                    pass
+                elif command == b"rmca-1.0:command_valve_outlet_toggle":
+                    if self.operation_status == 0:
+                        connection.sendall(host.send(b"rmca-1.0:connection_acknowledge"))
+                        host.serial("/dev/ttyACM0", "send", "<")
+                    else:
+                        connection.sendall(host.send(b"rmca-1.0:operation_state_incompatible"))
+                    pass
+                elif command == b"rmca-1.0:light_toggle":
+                    if self.operation_status == 0:
+                        connection.sendall(host.send(b"rmca-1.0:connection_acknowledge"))
+                        host.serial("/dev/ttyACM0", "send", "L")
+                    else:
+                        connection.sendall(host.send(b"rmca-1.0:operation_state_incompatible"))
                     pass
                 else:
                     connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))

@@ -1,5 +1,5 @@
 ping3
 pyserial >= 3
-pycryptodome >= 3.9.4
+pycryptodomex >= 3.9.4
 opencv-contrib-python >= 4.1.2.30
 numpy >= 1.18.1

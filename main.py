@@ -102,7 +102,7 @@ class client:
 			print("[FAIL]: Failed to load configurations! Configuration file is missing.")
 		pass
 		print("[INFO]: Starting background tasks...")
-		self.task_vitals_refresh = client.create_process(client.vitals_refresh, self)
+		# self.task_vitals_refresh = client.create_process(client.vitals_refresh, self)
 		print("[INFO]: Starting GUI...")
 		self.root = tkinter.Tk()
 		self.root.title("AquaSilva RCMA: Client")
@@ -227,12 +227,14 @@ class client:
 		pass
 	pass
 	def vitals_display_refresh(self):
-		""""""
-		self.vitals_text.configure(state=tkinter.NORMAL)
+		"""
+        Refreshes GUI display of host vitals.
+        """
+		self.vitals_text.configure(state = tkinter.NORMAL)
 		self.vitals_text.delete("1.0", tkinter.END)
 		self.vitals_text.insert("1.0", vitals_text_data)
 		self.vitals_text.update_idletasks()
-		self.vitals_text.configure(state=tkinter.DISABLED)
+		self.vitals_text.configure(state = tkinter.DISABLED)
 	pass
 	def vitals_refresh(self):
 		"""

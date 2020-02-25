@@ -7,16 +7,23 @@
 // D52 -> Relay North Input 2, Solenoid Inlet Valve Control
 // D53 -> AM2303 Sensor I/O
 
-#include "DHT.h"
+#include <DHT.h>
+#include <DHT_U.h>
+#include <DallasTemperature.h>
 
 #define DHTTYPE DHT22
 
 DHT dht(53, DHTTYPE);
+OneWire oneWire(51);
+DallasTemperature sensors(&oneWire);
 
 int incomingData;
+float temperature;
+float humidity;
 bool valveOutletActive = false;
 bool valveInletActive = false;
 bool lightActive = true;
+bool dhtFailed = false;
 
 void setup() {
   // put your setup code here, to run once:
@@ -27,6 +34,7 @@ void setup() {
   pinMode(50, OUTPUT);
   pinMode(52, OUTPUT);
   dht.begin();
+  sensors.begin();
 }
 
 void loop() {
@@ -85,16 +93,32 @@ void loop() {
     }
 
     if (incomingData == 'R') {
-      digitalWrite(40, HIGH)
+      digitalWrite(40, HIGH);
     }
 
     if (incomingData == '%') {
       float humidity = dht.readHumidity();
       float temperature = dht.readTemperature();
       if (isnan(humidity) || isnan(temperature)) {
-        dhtFailed = true
+        dhtFailed = true;
       }
-
+      else {
+        dhtFailed = false;
+      }
+      sensors.requestTemperatures();
+      if (dhtFailed == true) {
+        Serial.write("NaN");
+        Serial.write(char(sensors.getTempCByIndex(0)));
+        Serial.write("NaN");
+      }
+      else {
+        Serial.write(char(temperature));
+        Serial.write(char(sensors.getTempCByIndex(0)));
+        Serial.write(char(humidity));
+      }
+    }
+    if (incomingData == 'test') {
+      Serial.println(analogRead(8));
     }
   }
 }

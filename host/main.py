@@ -212,7 +212,7 @@ class host:
 		"""
 		while True:
 			sensor_data_now = self.sensor_data[self.sensor_data_index]
-			if sensor_data_now[4] == "HIGH":
+			if sensor_data_now[4] == "HIGH": # TODO finish water leveling
 				host.serial("/dev/ttyACM0", "send", "<")
 				water_level_corrected = False
 				while water_level_corrected is False:
@@ -227,6 +227,7 @@ class host:
 					pass
 				pass
 			pass
+			
 		pass
 	pass
 	@staticmethod

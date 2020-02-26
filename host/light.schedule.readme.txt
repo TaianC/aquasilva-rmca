@@ -1,0 +1,11 @@
+Light scheduling when automatic operation is used, will automatically adjust brightness of the connected LEDs.
+The light schedule accepts syntax in the following format:
+
+<hour> <minute> <second> to <hour> <minute> <second> <percent>
+
+For example:
+
+13 30 0 to 14 0 0 100
+
+Please note tht accepted times are read as UTC and are in 24 hr format.
+

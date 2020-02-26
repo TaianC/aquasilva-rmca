@@ -1,21 +1,24 @@
 // AquaSilva Remote Monitoring and Control Application (AquaSilva RMCA), Arduino Instructions for Serial Commandment
 // Performs tasks as per requested through serial, also will return sensor output when requested.
 
-// D40 -> RESET
+// D51 -> Relay South Input 4, GND to RESET Control
+// D49 -> DS1820 (Water Temperature) Sensor I/O
 // D48 -> Relay North Input 3, Light Toggle
 // D50 -> Relay North Input 1, Solenoid Outlet Valve Control
 // D52 -> Relay North Input 2, Solenoid Inlet Valve Control
-// D53 -> AM2303 Sensor I/O
+// D53 -> AM2303 (Ambient Temperature and Humidity) Sensor I/O
 
 #include <DHT.h>
 #include <DHT_U.h>
 #include <DallasTemperature.h>
+#include <Servo.h>
 
 #define DHTTYPE DHT22
 
 DHT dht(53, DHTTYPE);
-OneWire oneWire(51);
+OneWire oneWire(49);
 DallasTemperature sensors(&oneWire);
+Servo lightControlServo;
 
 int incomingData;
 float temperature;
@@ -29,21 +32,25 @@ void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
-  pinMode(40, OUTPUT);
+  pinMode(51, OUTPUT);
   pinMode(48, OUTPUT);
   pinMode(50, OUTPUT);
   pinMode(52, OUTPUT);
+
+  digitalWrite(51, HIGH);
+  digitalWrite(50, HIGH);
+  digitalWrite(52, HIGH);
+  
   dht.begin();
   sensors.begin();
+
+  lightControlServo.attach(9);
 }
 
 void loop() {
   // Key
   // 
-
-  digitalWrite(50, HIGH);
-  digitalWrite(52, HIGH);
-
+  
   if (Serial.available() > 0) {
 
     incomingData = Serial.read();
@@ -53,7 +60,7 @@ void loop() {
         valveOutletActive = true;
         digitalWrite(50, LOW);          
       }
-      if (valveOutletActive == true) {
+      else {
         valveOutletActive = false;
         digitalWrite(50, HIGH);
       }
@@ -64,7 +71,7 @@ void loop() {
         valveInletActive = true;
         digitalWrite(52, LOW);          
       }
-      if (valveInletActive == true) {
+      else {
         valveInletActive = false;
         digitalWrite(52, HIGH);
       }
@@ -77,7 +84,7 @@ void loop() {
         digitalWrite(48, LOW);   
         Serial.println(lightActive);       
       }
-      if (lightActive == true) {
+      else {
         lightActive = false;
         digitalWrite(48, HIGH);
         Serial.println(lightActive);
@@ -86,14 +93,18 @@ void loop() {
 
     if (incomingData == '[') {
       
-    }
+    } 
 
     if (incomingData == ']') {
 
     }
 
+    if (incomingData == ':') {
+      
+    }
+
     if (incomingData == 'R') {
-      digitalWrite(40, HIGH);
+      digitalWrite(51, LOW);
     }
 
     if (incomingData == '%') {

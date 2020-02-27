@@ -180,11 +180,11 @@ class client:
 		control_frame.grid(row = 1 , column = 1, padx = (5, 0))
 		os_control_frame = tkinter.Frame(control_frame, bg = "#506a96", highlightthickness = 2, bd = 0)
 		os_control_frame.grid(row = 0, column = 0, pady = (10, 0))
-		os_control_update_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Update OS", height = 1, width = 10, font = ("Calibri", 12), command = lambda: self.socket.sendall(client.send(self, b"command_update"))) # TODO please adjust button size
+		os_control_update_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Update OS", height = 1, width = 10, font = ("Calibri", 12), command = lambda: self.socket.sendall(client.send(self, b"command_update")))
 		os_control_update_button.grid(row = 0, column = 0, padx = (5, 5), pady = (40, 5))
-		os_control_shutdown_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Shutdown", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.os_control_shutdown_wrapper(self)) # TODO please adjust button size
+		os_control_shutdown_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Shutdown", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.os_control_shutdown_wrapper(self))
 		os_control_shutdown_button.grid(row = 1, column = 0, padx = (5, 5), pady = (0, 5))
-		os_control_reboot_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Reboot", height = 1, width = 10, font = ("Calibri", 12), command = lambda: self.socket.sendall(client.send(self, b"command_reboot"))) # TODO please adjust button size
+		os_control_reboot_button = tkinter.Button(os_control_frame, bg = "white", fg = "black", text = "Reboot", height = 1, width = 10, font = ("Calibri", 12), command = lambda: self.socket.sendall(client.send(self, b"command_reboot")))
 		os_control_reboot_button.grid(row = 2, column = 0, padx = (5, 5), pady = (0, 10))
 		os_control_notice_button = tkinter.Button(os_control_frame, bg = "#506a96", fg = "white", text = "!", height = 1, width = 1, command = lambda: messagebox.showinfo("AquaSilva RMCA: OS Command Notice", "When using this panel's functions, please note that:" + "\n" + "1. OS Update assumes that your host OS is Debian or Debian-based, and updates through APT." + "\n" + "2. Shutdown and reboot uses Linux's built-in functions to do so through shell." + "\n" + "3. After shutting down, there is no way to turn the bot back on besides cutting and restoring power. Please use cautiously."))
 		os_control_notice_button.grid(row = 3, column = 0, padx = (1, 80), pady = (50, 2))
@@ -653,6 +653,11 @@ class client:
 			print(acknowledgement.decode(encoding = "uft-8", errors = "replace"))
 		pass
 	pass
+	def lights_dimming_set(self, param):
+		pass
+	pass
+
+
 pass
 
 c = client()

@@ -107,7 +107,7 @@ class client:
 		self.root = tkinter.Tk()
 		self.root.title("AquaSilva RCMA: Client")
 		self.root.configure(bg = "#344561")
-		self.root.geometry('{}x{}'.format(1200, 530))
+		self.root.geometry('{}x{}'.format(765, 530))
 		self.root.resizable(width = False, height = False)
 		menu = tkinter.Menu(self.root)
 		self.root.config(menu = menu)
@@ -128,8 +128,16 @@ class client:
 		vitals_label.grid(row = 0, column = 0, padx = (5, 0))
 		self.vitals_text = tkinter.Text(vitals_frame, bg = "white", fg = "black", state = tkinter.DISABLED, height = 10, width = 50, font = ("Calibri", 10))
 		self.vitals_text.grid(row = 1, column = 0, padx = (5, 5), pady = (10, 0))
-		vitals_refresh_button = tkinter.Button(vitals_frame, text = "Refresh", bg = "white", fg = "black", command = lambda: client.vitals_refresh(self, False))
+		vitals_refresh_button = tkinter.Button(vitals_frame, text = "Refresh", bg = "white", fg = "black", command = lambda: client.vitals_refresh(self))
 		vitals_refresh_button.grid(row = 2, column = 0, padx = (5, 5), pady = (10, 5))
+		sensor_frame = tkinter.Frame(self.root, bg = "#506a96", highlightthickness = 2, bd = 0, height = 50, width = 60)
+		sensor_frame.grid(row = 0, column = 1, padx = (10, 0), pady = (15, 0))
+		sensor_label = tkinter.Label(sensor_frame, bg = "#506a96", fg = "white", text = "Sensors", font = ("Calibri", 12))
+		sensor_label.grid(row = 0, column = 0, padx = (5, 0))
+		self.sensor_text = tkinter.Text(sensor_frame, bg = "white", fg = "black", state = tkinter.DISABLED, height = 10, width = 50, font = ("Calibri", 10))
+		self.sensor_text.grid(row = 1, column = 0, padx = (5, 5), pady = (10, 0))
+		sensor_refresh_button = tkinter.Button(sensor_frame, text = "Refresh", bg = "white", fg = "black", command = lambda: client.sensor_refresh(self))
+		sensor_refresh_button.grid(row = 2, column = 0, padx = (5, 5), pady = (10, 5))
 		multi_frame = tkinter.Frame(self.root, bg = "#344561")
 		multi_frame.grid(row = 1, column = 0, padx = (10, 0), pady = (10, 0))
 		net_frame = tkinter.Frame(multi_frame, bg = "#506a96", highlightthickness = 2, bd = 0)
@@ -180,6 +188,29 @@ class client:
 		os_control_reboot_button.grid(row = 2, column = 0, padx = (5, 5), pady = (0, 10))
 		os_control_notice_button = tkinter.Button(os_control_frame, bg = "#506a96", fg = "white", text = "!", height = 1, width = 1, command = lambda: messagebox.showinfo("AquaSilva RMCA: OS Command Notice", "When using this panel's functions, please note that:" + "\n" + "1. OS Update assumes that your host OS is Debian or Debian-based, and updates through APT." + "\n" + "2. Shutdown and reboot uses Linux's built-in functions to do so through shell." + "\n" + "3. After shutting down, there is no way to turn the bot back on besides cutting and restoring power. Please use cautiously."))
 		os_control_notice_button.grid(row = 3, column = 0, padx = (1, 80), pady = (50, 2))
+		farm_control_frame = tkinter.Frame(control_frame, bg = "#506a96", highlightthickness = 2, bd = 0)
+		farm_control_frame.grid(row = 0, column = 1, pady = (10, 0), padx = (10, 0))
+		farm_control_label = tkinter.Label(farm_control_frame, bg = "#506a96", fg = "white", text = "Controls", font = ("Calibri", 12))
+		farm_control_label.grid(row = 0, column = 0)
+		farm_control_auto_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Auto", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.auto_wrapper(self))
+		farm_control_auto_button.grid(row = 1, column = 0, pady = (5, 0), padx = (25, 5))
+		farm_control_lights_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Lights", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.toggle_wrapper(self, "L"))
+		farm_control_lights_button.grid(row = 2, column = 0, pady = (5, 0), padx = (25, 5))
+		farm_control_valve_outlet_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Outlet Valve", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.toggle_wrapper(self, "L"))
+		farm_control_valve_outlet_button.grid(row = 3, column = 0, pady = (5, 0), padx = (25, 5))
+		farm_control_valve_inlet_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Inlet Valve", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.toggle_wrapper(self, "L"))
+		farm_control_valve_inlet_button.grid(row = 4, column = 0, pady = (5, 0), padx = (25, 5))
+		farm_control_help_button = tkinter.Button(farm_control_frame, bg = "#506a96", fg = "white", text = "?", height = 1, width = 1, command = lambda: messagebox.showinfo("AquaSilva RMCA: Controls", "This panel controls operation state, valves, and lights. Please note when the operation state is set to automatic, everything in this panel is locked and only the AUTO button is toggleable." + "\n" + "To use dimming, enter a percentage value to be adjusted to. Press reset to revert back to 100."))
+		farm_control_help_button.grid(row = 5, column = 0, padx = (0, 100), pady = (32, 0))
+		farm_control_lights_dimming_label = tkinter.Label(farm_control_frame, bg = "#506a96", fg = "white", text = "Light Dimmer", font = ("Calibri", 12))
+		farm_control_lights_dimming_label.grid(row = 0, column = 1, padx = (5, 27))
+		farm_control_lights_dimming_level_var = tkinter.StringVar(farm_control_frame)
+		farm_control_lights_dimming_entry = tkinter.Entry(farm_control_frame, bg = "white", fg = "black", textvariable = farm_control_lights_dimming_level_var, width = 10)
+		farm_control_lights_dimming_entry.grid(row = 1, column = 1, padx = (5, 27), pady = (5, 0))
+		farm_control_lights_dimming_submit_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Adjust", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.lights_dimming_set(self, farm_control_lights_dimming_level_var.get()))
+		farm_control_lights_dimming_submit_button.grid(row = 2, column = 1, padx = (5, 27), pady = (5, 0))
+		farm_control_lights_dimming_reset_button = tkinter.Button(farm_control_frame, bg = "white", fg = "black", text = "Reset", height = 1, width = 10, font = ("Calibri", 12), command = lambda: client.lights_dimming_set(self, "RESET"))
+		farm_control_lights_dimming_reset_button.grid(row = 3, column = 1, padx = (5, 27), pady = (5, 0))
 		self.root.mainloop()
 	pass
 	@staticmethod
@@ -228,13 +259,15 @@ class client:
 	pass
 	def vitals_display_refresh(self):
 		"""
-        Refreshes GUI display of host vitals.
-        """
+		Refreshes GUI display of host vitals.
+		"""
+		'''
 		self.vitals_text.configure(state = tkinter.NORMAL)
 		self.vitals_text.delete("1.0", tkinter.END)
 		self.vitals_text.insert("1.0", vitals_text_data)
 		self.vitals_text.update_idletasks()
 		self.vitals_text.configure(state = tkinter.DISABLED)
+		'''
 	pass
 	def vitals_refresh(self):
 		"""
@@ -608,10 +641,10 @@ class client:
 		elif acknowledgement == b"rmca-1.0:authentication_invalid":
 			print("[FAIL]: Did not receive an acknowledgement. Authentication was invalid.")
 			return False
-        elif acknowledgement == b"rmca-1.0:operation_status_incompatible":
-            print("[FAIL]: Current operation status is automatic, manual input is not allowed. Please change from automatic operation.")
-            messagebox.showerror("AquaSilva RMCA: Operation Status Incompatible", "Host is currently running in automatic operation. Please disable this to allow for manual input.")
-            return False
+		elif acknowledgement == b"rmca-1.0:operation_status_incompatible":
+			print("[FAIL]: Current operation status is automatic, manual input is not allowed. Please change from automatic operation.")
+			messagebox.showerror("AquaSilva RMCA: Operation Status Incompatible", "Host is currently running in automatic operation. Please disable this to allow for manual input.")
+			return False
 		elif acknowledgement == b"rmca-1.0:unknown_command":
 			print("[FAIL]: Command unrecognized by host.")
 			return False

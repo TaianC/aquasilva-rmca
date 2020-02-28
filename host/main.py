@@ -164,7 +164,9 @@ class host:
 					self.task_auto = host.create_process(host.auto, self)
 					pass
 				elif command == b"rmca-1.0:command_auto_stop":
-					# TODO add automatic operation status switching
+					connection.sendall(host.send(self, b"rca-1.0:connection_acknowledge"))
+					host.state_reset(self)
+					host.self.task_auto
 					pass
 				elif command == b"rmca-1.0:command_valve_inlet_toggle":
 					if self.operation_status == 0:
@@ -403,6 +405,27 @@ class host:
 			return dummy
 		else:
 			return None
+		pass
+	pass
+	@staticmethod
+	def stop_process(target, error_ignore):
+		"""
+		Stops target process from multiprocessing.
+		:param target: process to be stopped.
+		:param error_ignore: boolean to tell the function to throw a failure message or not when failed.
+		:return: none.
+		"""
+		if __name__ == '__main__':
+			try:
+				target.terminate()
+			except Exception as spe:
+				if error_ignore is True:
+					print("[INFO]: Stop process failed, however this is indicated to be normal.")
+				else:
+					print("[FAIL]: Stop process failed! See details below.")
+					print(spe)
+				pass
+			pass
 		pass
 	pass
 	@staticmethod

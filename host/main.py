@@ -159,18 +159,26 @@ class host:
 					connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
 					host.state_reset(self)
 				elif command == b"rmca-1.0:command_auto_start":
-					connection.sendall(host.send(self, b"rca-1.0:connection_acknowledge"))
-					host.state_reset(self)
-					self.task_auto = host.create_process(host.auto, self)
+					if self.operation_status == 0:
+						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						host.state_reset(self)
+						self.operation_status = 1
+						self.task_auto = host.create_process(host.auto, self)
+					else:
+						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
 					pass
 				elif command == b"rmca-1.0:command_auto_stop":
-					connection.sendall(host.send(self, b"rca-1.0:connection_acknowledge"))
-					host.state_reset(self)
-					host.self.task_auto
+					if self.operation_status == 1:
+						connection.sendall(host.send(self, b"rca-1.0:connection_acknowledge"))
+						host.state_reset(self)
+						host.stop_process(self.task_auto, False)
+					else:
+						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
 					pass
 				elif command == b"rmca-1.0:command_valve_inlet_toggle":
 					if self.operation_status == 0:
 						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						self.state_valve_inlet = not self.state_valve_inlet
 						host.serial("/dev/ttyACM0", "send", ">")
 					else:
 						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
@@ -178,6 +186,7 @@ class host:
 				elif command == b"rmca-1.0:command_valve_outlet_toggle":
 					if self.operation_status == 0:
 						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						self.state_valve_outlet = not self.state_valve_outlet
 						host.serial("/dev/ttyACM0", "send", "<")
 					else:
 						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
@@ -185,6 +194,7 @@ class host:
 				elif command == b"rmca-1.0:light_toggle":
 					if self.operation_status == 0:
 						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						self.state_light = not self.state_light
 						host.serial("/dev/ttyACM0", "send", "L")
 					else:
 						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))

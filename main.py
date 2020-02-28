@@ -672,6 +672,16 @@ class client:
 			print(acknowledgement.decode(encoding = "uft-8", errors = "replace"))
 		pass
 	pass
+	def state_reset(self):
+		"""
+		Resets state values.
+		:return: none.
+		"""
+		self.state_valve_outlet = False
+		self.state_valve_inlet = False
+		self.state_light = False
+		self.state_light_level = 100
+	pass
 	def lights_dimming_set(self, setting):
 		"""
 		Sets light dimming percentage, and sends to host.
@@ -679,7 +689,7 @@ class client:
 		:return: none.
 		"""
 		if self.operation_status == 1:
-			messagebox.showerror("AquaSilva RMCA: Light Dimming Error", "Host is in automatic operation. Please disable this before entering manual commands.")
+			messagebox.showerror("AquaSilva RMCA: Light Dimming Error", "Host is currently running in automatic operation. Please disable this to allow for manual input.")
 			return None
 		else:
 			if setting == "RESET":
@@ -713,16 +723,51 @@ class client:
 		Toggles automatic mode in host.
 		:return: none.
 		"""
-		self.operation_status = 1
-
-
+		if self.operation_status == 1:
+			self.operation_status = 0
+			self.socket.sendall(client.send(self, b"rmca-1.0:command_auto_stop"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
+			client.state_reset(self)
+		else:
+			self.operation_status = 1
+			self.socket.sendall(client.send(self, b"rmca-1.0:command_auto_start"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
+			client.state_reset(self)
 		pass
 	pass
-	def toggle_wrapper(self, param):
+	def toggle_wrapper(self, toggle_flag):
 		"""
 		Wrapper for hardware toggle commands to host.
+		:param toggle_flag: Arduino command to be translated back into socket communications command and sent.
 		:return: none.
 		"""
+		if self.operation_status == 0:
+			if toggle_flag == "<":
+				self.socket.sendall(client.send(self, b"rmca-1.0:command_valve_outlet"))
+				self.state_valve_outlet = not self.state_valve_outlet
+				if client.receive_acknowledgement(self) is False:
+					return None
+				pass
+			elif toggle_flag == ">":
+				self.socket.sendall(client.send(self, b"rmca-1.0:command_valve_inlet"))
+				self.state_valve_inlet = not self.state_valve_inlet
+				if client.receive_acknowledgement(self) is False:
+					return None
+				pass
+			elif toggle_flag == "L":
+				self.socket.sendall(client.send(self, b"rmca-1.0:light_toggle"))
+				self.state_light = not self.state_light
+				if client.receive_acknowledgement(self) is False:
+					return None
+				pass
+			pass
+		else:
+			messagebox.showerror("AquaSilva RMCA: Operation Status Incompatible", "Host is currently running in automatic operation. Please disable this to allow for manual input.")
+			return None
 		pass
 	pass
 pass

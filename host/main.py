@@ -159,7 +159,9 @@ class host:
 					connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
 					host.state_reset(self)
 				elif command == b"rmca-1.0:command_auto_start":
-					# TODO add automatic operation status switching
+					connection.sendall(host.send(self, b"rca-1.0:connection_acknowledge"))
+					host.state_reset(self)
+					self.task_auto = host.create_process(host.auto, self)
 					pass
 				elif command == b"rmca-1.0:command_auto_stop":
 					# TODO add automatic operation status switching
@@ -185,6 +187,23 @@ class host:
 					else:
 						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
 					pass
+				elif command == b"rmca-1.0:light_reset":
+					if self.operation_status == 0:
+						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						host.serial("/dev/ttyACM0", "send", ":")
+						self.state_light_level = 100
+					else:
+						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
+					pass
+				elif command == b"rmca-1.0:light_adjust":
+					if self.operation_status == 0:
+						connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+						self.state_light_level = int(host.receive(self, connection.recv(4096)))
+						host.serial("/dev/ttyACM0", "send", ":")
+						# TODO add calculation for turn amount
+					else:
+						connection.sendall(host.send(self, b"rmca-1.0:operation_state_incompatible"))
+					pass
 				else:
 					connection.sendall(host.send(self, b"rmca-1.0:unknown_command"))
 				pass # add more keys here
@@ -201,6 +220,7 @@ class host:
 		self.state_valve_inlet = False
 		self.state_light = False
 		self.state_light_level = 100
+		self.operation_status = 0
 		host.serial("/dev/ttyACM0", "send", "R")
 		sleep(2)
 		host.serial("/dev/ttyACM0", "send", ":")

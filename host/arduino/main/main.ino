@@ -136,8 +136,9 @@ void loop() {
         Serial.write(char(humidity));
       }
     }
-    if (incomingData == 'test') {
+    if (incomingData == "?") {
       Serial.println(analogRead(8));
+      Serial.println("RESULT")
     }
   }
 }

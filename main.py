@@ -79,6 +79,11 @@ class client:
 		self.ping_button = None
 		self.ping_results = ""
 		self.report_content = ""
+		self.operation_status = 0
+		self.state_valve_outlet = False
+		self.state_valve_inlet = False
+		self.state_light = False
+		self.state_light_level = 0
 		self.vitals_database = {}
 		print("[INFO]: Loading configurations...")
 		config_parse_load = configparser.ConfigParser()
@@ -161,7 +166,6 @@ class client:
 		report_type_list = [
 			"None",
 			"CH Check",
-			""
 		]
 		report_type_data = tkinter.StringVar(report_frame)
 		report_type_data.set(report_type_list[0])
@@ -174,7 +178,7 @@ class client:
 		report_view_button.grid(row = 3, column = 0, padx = (5, 0), pady = (5, 0))
 		report_save_button = tkinter.Button(report_frame, bg = "white", fg = "black", text = "Save", font = ("Calibri", 12), width = 10, command = lambda: client.report_save(self, report_type_data.get(), self.report_content))
 		report_save_button.grid(row = 4, column = 0, padx = (5, 0), pady = (5, 0))
-		report_help_button = tkinter.Button(report_frame, bg = "#506a96", fg = "white", text = "?", width = 1, height = 1, font = ("Calibri", 10), command = lambda: messagebox.showinfo("AquaSilva RMCA: Report Help", "This panel allows you to request, view, and save reports of a vareity of types. These include computer hardware checks (CH Check) and science reports (Science, RFP Enceladus)."))
+		report_help_button = tkinter.Button(report_frame, bg = "#506a96", fg = "white", text = "?", width = 1, height = 1, font = ("Calibri", 10), command = lambda: messagebox.showinfo("AquaSilva RMCA: Report Help", "This panel allows you to request, view, and save reports."))
 		report_help_button.grid(row = 5, column = 0, padx = (5, 150), pady = (22, 7))
 		control_frame = tkinter.Frame(self.root, bg = "#344561")
 		control_frame.grid(row = 1 , column = 1, padx = (5, 0))
@@ -271,7 +275,22 @@ class client:
 	pass
 	def vitals_refresh(self):
 		"""
-		Requests bot vitals. Intended for multiprocessing.
+		Requests status. Intended for multiprocessing.
+		:return: none.
+		"""
+		while True:
+			self.socket.sendall(client.send(self, b"rmca-1.0:vitals_request"))
+			vitals_text_data = client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace")
+			if self.random_refresh is True:
+				sleep(randint(1, 3))
+			else:
+				sleep(1)
+			pass
+		pass
+	pass
+	def sensor_refresh(self):
+		"""
+		Requests sensor data. Intended for multiprocessing.
 		:return: none.
 		"""
 		while True:
@@ -653,11 +672,59 @@ class client:
 			print(acknowledgement.decode(encoding = "uft-8", errors = "replace"))
 		pass
 	pass
-	def lights_dimming_set(self, param):
+	def lights_dimming_set(self, setting):
+		"""
+		Sets light dimming percentage, and sends to host.
+		:param setting: light percentage setting or reset signal.
+		:return: none.
+		"""
+		if self.operation_status == 1:
+			messagebox.showerror("AquaSilva RMCA: Light Dimming Error", "Host is in automatic operation. Please disable this before entering manual commands.")
+			return None
+		else:
+			if setting == "RESET":
+				self.socket.sendall(client.send(self, b"rmca-1.0:light_reset"))
+				self.state_light_level = 100
+				if client.receive_acknowledgement(self) is False:
+					return None
+				pass
+			else:
+				try:
+					int(setting)
+				except ValueError:
+					messagebox.showerror("AquaSilva RMCA: Light Dimming Error", "Dimming value was not a number.")
+					return None
+				pass
+				if setting not in range(0, 101):
+					messagebox.showerror("AquaSilva RMCA: Light Dimming Error", "Dimming value was a number, but was not a value between 0-100.")
+					return None
+				pass
+				self.socket.sendall(client.send(self, b"rmca-1.0:light_adjust"))
+				if client.receive_acknowledgement(self) is False:
+					return None
+				pass
+				self.state_light_level = setting
+				self.socket.sendall(client.send(self, str(setting).encode(encoding = "ascii", errors = "replace")))
+			pass
 		pass
 	pass
+	def auto_wrapper(self):
+		"""
+		Toggles automatic mode in host.
+		:return: none.
+		"""
+		self.operation_status = 1
 
 
+		pass
+	pass
+	def toggle_wrapper(self, param):
+		"""
+		Wrapper for hardware toggle commands to host.
+		:return: none.
+		"""
+		pass
+	pass
 pass
 
 c = client()

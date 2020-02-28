@@ -1,12 +1,19 @@
 Light scheduling when automatic operation is used, will automatically adjust brightness of the connected LEDs.
+During times where the time schedule does not define a light percentage or is empty, it will default to 100%.
 The light schedule accepts syntax in the following format:
 
 <hour> <minute> <second> to <hour> <minute> <second> <percent>
 END
 
-For example:
+For example (lights at 50% from 1:30 PM UTC to 2:00 PM UTC):
 
-13 30 0 to 14 0 0 100
+13 30 0 to 14 0 0 50
+END
+
+Or (lights at 0% from 6:00 PM UTC to 6:00 AM UTC and lights at 80% from 6:00:1 AM UTC to 5:59:59 PM UTC):
+
+18 0 0 to 6 0 0 0
+6 0 1 to 17 59 59 80
 END
 
 If light schedule is not used, simply leave as:

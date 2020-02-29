@@ -242,6 +242,8 @@ class host:
 		Automatic management of AquaSilva system. Intended to be ran through host.create_process.
 		:return: none.
 		"""
+		light_schedule = open("light.schedule").readlines()
+		light_schedule_index = len(light_schedule)
 		while True:
 			sensor_data_now = self.sensor_data[self.sensor_data_index]
 			if sensor_data_now[4] == "HIGH": # TODO finish water leveling
@@ -259,7 +261,26 @@ class host:
 					pass
 				pass
 			pass
-			
+			light_schedule_read_index = 0
+			while light_schedule_read_index != light_schedule_index:
+				light_schedule_instruction = light_schedule[light_schedule_read_index]
+				if light_schedule_instruction == "END":
+					pass # TODO add end of light instructions
+				else:
+					light_schedule_instruction.split()
+					current = strftime("%H %M %S", gmtime()).split()
+					if current[0] in range(light_schedule_instruction[0], light_schedule_instruction[4] + 1):
+						if current[1] in range(light_schedule_instruction[1], light_schedule_instruction[5] + 1) or light_schedule_instruction[1] == 0 and light_schedule_instruction[5] == 0:
+							if current[2] in range(light_schedule_instruction[2], light_schedule_instruction[6] + 1) or light_schedule_instruction[1] == 0 and light_schedule_instruction[5] == 0:
+								host.serial("/dev/ttyACM0", "send", ":")
+								self.state_light_level = light_schedule_instruction[7]
+								# TODO add calculation for turn amount
+							pass
+						pass
+					pass
+				pass
+				light_schedule_read_index += 1
+			pass
 		pass
 	pass
 	@staticmethod
@@ -479,7 +500,7 @@ class host:
 			temperature_water = host.serial("/dev/ttyACM0", "receive", None)
 			humidity = host.serial("/dev/ttyACM0", "receive", None)
 			water_level = host.serial("/dev/ttyACM0", "receive", None)
-			data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC"), str(int(time())), temperature, temperature_water, humidity, water_level]
+			data_bundle = [strftime("%Y-%m-%d %H:%M:%S UTC", gmtime()), str(int(time())), temperature, temperature_water, humidity, water_level]
 			self.sensor_data.append(data_bundle)
 			self.sensor_data_index += 1
 			# TODO ensure receive format matches Arduino instructions

@@ -26,7 +26,8 @@ try:
 	from tkinter import messagebox
 	from ast import literal_eval
 	import ping3
-	from platform import system 
+	from platform import system
+	import pickle
 	# import hashlib
 	from random import randint
 except ImportError as e:
@@ -52,6 +53,7 @@ except ImportError as e:
 	# AES = None
 	# Random = None
 	# hashlib = None
+	pickle = None
 	randint = None
 	print("[FAIL]: Imports failed! See below.")
 	print(e)
@@ -79,12 +81,12 @@ class client:
 		self.ping_button = None
 		self.ping_results = ""
 		self.report_content = ""
+		self.sensor_content = ""
 		self.operation_status = 0
 		self.state_valve_outlet = False
 		self.state_valve_inlet = False
 		self.state_light = False
 		self.state_light_level = 0
-		self.vitals_database = {}
 		print("[INFO]: Loading configurations...")
 		config_parse_load = configparser.ConfigParser()
 		try:
@@ -129,7 +131,7 @@ class client:
 		menu.add_cascade(label = "Add-Ons", menu = addon_menu)
 		vitals_frame = tkinter.Frame(self.root, bg = "#506a96", highlightthickness = 2, bd = 0, height = 50, width = 60)
 		vitals_frame.grid(row = 0, column = 0, padx = (10, 0), pady = (15, 0))
-		vitals_label = tkinter.Label(vitals_frame, bg = "#506a96", fg = "white", text = "Vitals", font = ("Calibri", 12))
+		vitals_label = tkinter.Label(vitals_frame, bg = "#506a96", fg = "white", text = "Status", font = ("Calibri", 12))
 		vitals_label.grid(row = 0, column = 0, padx = (5, 0))
 		self.vitals_text = tkinter.Text(vitals_frame, bg = "white", fg = "black", state = tkinter.DISABLED, height = 10, width = 50, font = ("Calibri", 10))
 		self.vitals_text.grid(row = 1, column = 0, padx = (5, 5), pady = (10, 0))
@@ -166,6 +168,7 @@ class client:
 		report_type_list = [
 			"None",
 			"CH Check",
+			"Sensors"
 		]
 		report_type_data = tkinter.StringVar(report_frame)
 		report_type_data.set(report_type_list[0])
@@ -261,26 +264,31 @@ class client:
 			pass
 		pass
 	pass
-	def vitals_display_refresh(self):
-		"""
-		Refreshes GUI display of host vitals.
-		"""
-		'''
-		self.vitals_text.configure(state = tkinter.NORMAL)
-		self.vitals_text.delete("1.0", tkinter.END)
-		self.vitals_text.insert("1.0", vitals_text_data)
-		self.vitals_text.update_idletasks()
-		self.vitals_text.configure(state = tkinter.DISABLED)
-		'''
-	pass
 	def vitals_refresh(self):
 		"""
 		Requests status. Intended for multiprocessing.
 		:return: none.
 		"""
 		while True:
-			self.socket.sendall(client.send(self, b"rmca-1.0:vitals_request"))
-			vitals_text_data = client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace")
+			self.socket.sendall(client.send(self, b"rmca-1.0:state_get"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
+			self.state_light_level = int(client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace"))
+			self.state_light = literal_eval(client.receive(self, self.socket.recv(4096)).decode(encoding="utf-8", errors="replace"))
+			self.state_valve_inlet = literal_eval(client.receive(self, self.socket.recv(4096)).decode(encoding="utf-8", errors="replace"))
+			self.state_valve_outlet = literal_eval(client.receive(self, self.socket.recv(4096)).decode(encoding="utf-8", errors="replace"))
+			self.operation_status = int(client.receive(self, self.socket.recv(4096)).decode(encoding="utf-8", errors="replace"))
+			if self.operation_status == 0:
+				operation_status = "Manual"
+			else:
+				operation_status = "Auto"
+			pass
+			self.vitals_text.configure(state = tkinter.NORMAL)
+			self.vitals_text.delete("1.0", tkinter.END)
+			self.vitals_text.insert("1.0", "[STATUS] \n" + "Operation State: " + operation_status + "\n Valve Outlet Open: " + str(self.state_valve_outlet) + "\n Valve Inlet Open: " + str(self.state_valve_inlet) + "\n Lights Powered: " + str(self.state_light) + "\n Light Dimming Percentage: " + str(self.state_light_level) + "%")
+			self.vitals_text.update_idletasks()
+			self.vitals_text.configure(state = tkinter.DISABLED)
 			if self.random_refresh is True:
 				sleep(randint(1, 3))
 			else:
@@ -294,8 +302,16 @@ class client:
 		:return: none.
 		"""
 		while True:
-			self.socket.sendall(client.send(self, b"rmca-1.0:vitals_request"))
-			vitals_text_data = client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace")
+			self.socket.sendall(client.send(self, b"rmca-1.0:sensor_collect"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
+			data = client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace").split()
+			self.sensor_content = "Timestamp: " + data[0] + "\n" + "Epoch Timestamp: " + data[1] + "\n" + "Ambient Temperature: " + data[2] + " C\n" + "Water Temperature: " + data[3] + "C\n" + "Humidity: " + data[4] + "%\n" + "Water Level: " + data[5] + "\n"
+			self.vitals_text.configure(state = tkinter.NORMAL)
+			self.vitals_text.delete("1.0", tkinter.END)
+			self.vitals_text.insert("1.0", "[SENSORS] \n" + self.sensor_content)
+			self.vitals_text.update_idletasks()
 			if self.random_refresh is True:
 				sleep(randint(1, 3))
 			else:
@@ -461,6 +477,24 @@ class client:
 			data = client.receive(self, self.socket.recv(4096))
 			data = data.decode(encoding="utf-8", errors="replace")
 			self.report_content = data
+		elif report_type == "Sensors":
+			self.socket.sendall(client.send(self, b"rmca-1.0:sensor_data_clear"))
+			if client.receive_acknowledgement(self) is False:
+				return None
+			pass
+			data = pickle.loads(client.receive(self, self.socket.recv(262144)))
+			file = open("sensor_data-" + str((strftime("%b%d%Y%H%M%S"), gmtime())[0]) + ".p", "wb")
+			pickle.dump(data, file, pickle.HIGHEST_PROTOCOL)
+			file.close()
+			data_index = int(client.receive(self, self.socket.recv(4096)).decode(encoding = "utf-8", errors = "replace"))
+			file_index = open("sensor_data_index-" + str((strftime("%b%d%Y%H%M%S"), gmtime())[0]) + ".txt", "wb")
+			file_index.write(str(data_index).encode(encoding = "ascii", errors = "replace"))
+			file_index.close()
+			data_read_index = 0
+			while data_index != data_index:
+				self.report_content = data[data_read_index][0] + " " + data[data_read_index][1] + " " + data[data_read_index][2] + " " + data[data_read_index][3] + " " + data[data_read_index][4] + " " + data[data_read_index][5] + "\n"
+				data_read_index += 1
+			pass
 		else:
 			return None
 		pass

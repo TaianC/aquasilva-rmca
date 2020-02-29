@@ -26,6 +26,7 @@ try:
 	import multiprocessing
 	import serial
 	from ast import literal_eval
+	import pickle
 	from .computer_hardware_check import ch_check
 	# import hashlib
 except ImportError as e:
@@ -47,6 +48,7 @@ except ImportError as e:
 	multiprocessing = None
 	literal_eval = None
 	SHA3_512 = None
+	pickle = None
 	ch_check = None
 	# RSA = None
 	# AES = None
@@ -69,8 +71,6 @@ class host:
 		self.host = ""
 		self.port = 64220
 		self.connect_retries = 0
-		self.sensor_data = []
-		self.sensor_data_index = 0
 		self.operation_status = 0 # 0 = manual, 1 = auto
 		self.state_valve_outlet = False
 		self.state_valve_inlet = False
@@ -99,7 +99,6 @@ class host:
 		host.state_reset(self)
 		print("[INFO]: Starting background processes...")
 		self.process_sensor_collect = host.create_process(host.sensor_collect, self)
-		self.process_auto = host.create_process(host.auto, self)
 		print("[INFO]: Creating open server socket...")
 		self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 		self.socket.setblocking(False)
@@ -143,15 +142,23 @@ class host:
 					for x in sensor_data_now:
 						sensor_data_now[x].encode(encoding = "ascii", errors = "replace")
 					pass
-					connection.sendall(host.send(self, sensor_data_now[0] + b" " + sensor_data_now[1] + b" " + sensor_data_now[2] + b" " + sensor_data_now[3] + b" " + sensor_data_now[4]))
+					connection.sendall(host.send(self, sensor_data_now[0] + b" " + sensor_data_now[1] + b" " + sensor_data_now[2] + b" " + sensor_data_now[3] + b" " + sensor_data_now[4] + b" " + sensor_data_now[5]))
+				elif command == b"rmca-1.0:sensor_data_clear":
+					connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
+					host.stop_process(self.process_sensor_collect, False)
+					connection.sendall(host.send(self, pickle.dumps(self.sensor_data)))
+					connection.sendall(host.send(self, str(self.sensor_data_index).encode(encoding = "ascii", errors = "replace")))
+					self.sensor_data = []
+					self.sensor_data_index = 0
+					self.process_sensor_collect = host.create_process(host.sensor_collect, self)
 				elif command == b"rmca-1.0:command_ch_check":
 					connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
 					connection.sendall(host.send(self, ch_check()))
 				elif command == b"rmca-1.0:state_get":
 					connection.sendall(host.send(self, b"rmca-1.0:connection_acknowledge"))
 					states = [str(self.operation_status), str(self.state_valve_outlet), str(self.state_valve_inlet), str(self.state_light), str(self.state_light_level)]
-					states_index = 5
-					while states_index != 0:
+					states_index = 4
+					while states_index != (0 - 1):
 						connection.sendall(host.send(self, states[states_index]))
 						states_index -= 1
 					pass
@@ -269,11 +276,11 @@ class host:
 				else:
 					light_schedule_instruction.split()
 					current = strftime("%H %M %S", gmtime()).split()
-					if current[0] in range(light_schedule_instruction[0], light_schedule_instruction[4] + 1):
-						if current[1] in range(light_schedule_instruction[1], light_schedule_instruction[5] + 1) or light_schedule_instruction[1] == 0 and light_schedule_instruction[5] == 0:
-							if current[2] in range(light_schedule_instruction[2], light_schedule_instruction[6] + 1) or light_schedule_instruction[1] == 0 and light_schedule_instruction[5] == 0:
+					if current[0] in range(int(light_schedule_instruction[0]), int(light_schedule_instruction[4]) + 1):
+						if current[1] in range(int(light_schedule_instruction[1]), int(light_schedule_instruction[5]) + 1) or int(light_schedule_instruction[1]) == 0 and int(light_schedule_instruction[5]) == 0:
+							if current[2] in range(int(light_schedule_instruction[2]), int(light_schedule_instruction[6]) + 1) or int(light_schedule_instruction[1]) == 0 and int(light_schedule_instruction[5]) == 0:
 								host.serial("/dev/ttyACM0", "send", ":")
-								self.state_light_level = light_schedule_instruction[7]
+								self.state_light_level = int(light_schedule_instruction[7])
 								# TODO add calculation for turn amount
 							pass
 						pass
@@ -376,8 +383,13 @@ class host:
 		:param byte_input: byte string to be encrypted.
 		:return: encrypted string, nonce, and HMAC validation.
 		"""
+		if isinstance(byte_input, bytes):
+			pass
+		else:
+			byte_input.encode(encoding="ascii", errors="replace")
+		pass
 		ciphering = Salsa20.new(self.key)
-		validation = HMAC.new(self.hmac_key, msg = ciphering.encrypt(byte_input), digestmod = SHA256)
+		validation = HMAC.new(self.hmac_key, msg=ciphering.encrypt(byte_input), digestmod = SHA256)
 		return [ciphering.encrypt(byte_input), ciphering.nonce, validation.hexdigest()]
 	pass
 	def decrypt(self, encrypted_input, validate, nonce):
@@ -387,7 +399,7 @@ class host:
 		:param validate: HMAC validation byte string.
 		:param nonce: nonce, additional security feature to prevent replay attacks.
 		"""
-		validation = HMAC.new(self.hmac_key, msg = encrypted_input, digestmod = SHA256)
+		validation = HMAC.new(self.hmac_key, msg=encrypted_input, digestmod = SHA256)
 		try:
 			validation.hexverify(validate)
 		except ValueError:
@@ -395,7 +407,7 @@ class host:
 			host.restart()
 			raise Exception("[FAIL]: Message is not authentic, failed HMAC validation!")
 		pass
-		ciphering = Salsa20.new(self.key, nonce = nonce)
+		ciphering = Salsa20.new(self.key, nonce=nonce)
 		return ciphering.decrypt(encrypted_input)
 	pass
 	def receive_acknowledgement(self):
@@ -492,6 +504,7 @@ class host:
 	def sensor_collect(self):
 		"""
 		Collects sensor data from serial connection and adds to data list.
+		List
 		Intended to be ran through host.create_process.
 		"""
 		while True:

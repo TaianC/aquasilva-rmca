@@ -592,6 +592,7 @@ class client:
 			return None
 		pass
 		print("[INFO]: Successfully connected to host!")
+		messagebox.showinfo("AquaSilva RMCA: Connection Successful", "You are now connected to the host." + "\n Host IP (in case you want to use SSH): " + self.host)
 		# AES + RSA-based encryption was not finished, and sections using it were commented out.
 		# print("[INFO]: Generating encryption keys...")
 		# random = Random.new().read

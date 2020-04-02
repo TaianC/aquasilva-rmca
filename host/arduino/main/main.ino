@@ -138,7 +138,8 @@ void loop() {
     }
     if (incomingData == "?") {
       Serial.println(analogRead(8));
-      Serial.println("RESULT")
+      Serial.println("RESULT");
     }
   }
+  
 }
